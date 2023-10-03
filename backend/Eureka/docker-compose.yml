@@ -1,0 +1,107 @@
+version: '3'
+
+services:
+  database-blocks:
+     image: 'postgres:13-alpine'
+     environment:
+       - POSTGRES_DB=blocks
+       - POSTGRES_USER=dot
+       - POSTGRES_PASSWORD=12345
+     expose:
+       - 5432
+     command: -p 5432
+     ports:
+       - '5432:5432'
+
+  database-users:
+    image: 'postgres:13-alpine'
+    environment:
+      - POSTGRES_DB=users
+      - POSTGRES_USER=dot
+      - POSTGRES_PASSWORD=12345
+    expose:
+      - 5436
+    command: -p 5436
+    ports:
+      - '5436:5436'
+
+  database-gateway:
+     image: 'postgres:13-alpine'
+     environment:
+       - POSTGRES_DB=users
+       - POSTGRES_USER=dot
+       - POSTGRES_PASSWORD=12345
+     expose:
+       - 5434
+     command: -p 5434
+     ports:
+       - '5434:5434'
+
+  eureka-service:
+    build: ./
+    container_name: eureka-service
+    ports:
+      - "5767:5767"
+
+  keycloak-db:
+    container_name: keycloak-db
+    image: 'postgres:13-alpine'
+    environment:
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=dot
+      - POSTGRES_PASSWORD=12345
+    expose:
+      - 5433
+    command: -p 5433
+    ports:
+      - '5433:5433'
+
+
+  keycloak:
+    container_name: keycloak-service
+    image: jboss/keycloak:latest
+    command: ["-Djboss.http.port=8000"]
+    ports:
+      - '8000:8000'
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: keycloak-db
+      DB_DATABASE: keycloak
+      DB_USER: dot
+      DB_PASSWORD: 12345
+      DB_PORT: 5433
+    depends_on:
+      - keycloak-db
+
+  gateway:
+    build: ../gateway
+    container_name: gateway-service
+    ports:
+      - '8079:8079'
+    depends_on:
+      - eureka-service
+      - keycloak
+      - database-gateway
+
+  block-info-service1:
+    build: ../BlockInfoMicroservice
+    container_name: block-info-service1
+    ports:
+      - "8082:8082"
+    environment:
+      - SERVER_PORT=8082
+
+  user-info-service:
+    build: ../UserMicroservice
+    container_name: user-info-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SERVER_PORT=8083
+
+  frontend:
+    build: ../../Frontend
+    container_name: frontend
+    ports:
+      - "8181:80"
+

@@ -1,0 +1,21 @@
+server:
+  port: ${SERVER_PORT}
+spring:
+  datasource:
+    password: 12345
+    username: dot
+    url: jdbc:postgresql://database-blocks:5432/blocks
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    generate-ddl: true
+  application:
+    name: block-info-service
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-service:5767/eureka
